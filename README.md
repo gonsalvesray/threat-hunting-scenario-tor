@@ -35,7 +35,7 @@ Searched the **DeviceFileEvents** table for ANY file that had the string `tor` i
 **Query used to locate events:**
 
 ```kql
-// TOR Browser or service was launched
+// TOR browser was downloaded
 let VMName = "gonsalvr-mde";
 DeviceProcessEvents
 | where DeviceName == VMName 
@@ -43,7 +43,6 @@ and TimeGenerated between (todatetime('2025-03-16T21:16:05.0220793Z') .. todatet
 and ProcessCommandLine has_any("tor.exe","firefox.exe", "tor-browser.exe")
 | project TimeGenerated, DeviceName, AccountName, ActionType, ProcessCommandLine, SHA256
 ```
-<img width="1212" alt="image" src="https://github.com/user-attachments/assets/71402e84-8767-44f8-908c-1805be31122d">
 
 ![image](https://github.com/user-attachments/assets/c110bc85-1eb5-4c3e-b288-9d63ca70e87c)
 
@@ -51,18 +50,24 @@ and ProcessCommandLine has_any("tor.exe","firefox.exe", "tor-browser.exe")
 
 ### 2. Searched the `DeviceProcessEvents` Table
 
-Searched for any `ProcessCommandLine` that contained the string "tor-browser-windows-x86_64-portable-14.0.1.exe". Based on the logs returned, at `2024-11-08T22:16:47.4484567Z`, an employee on the "threat-hunt-lab" device ran the file `tor-browser-windows-x86_64-portable-14.0.1.exe` from their Downloads folder, using a command that triggered a silent installation.
+The next step was to look for evidence of the user installing the TOR Browser on the desktop. The following KQL query searched the **ProcessCommandLine** field in the  **DeviceProcessEvents** table looking for the string `tor-browser-windows-x86_64-portable-14.0.7.exe  /S`
+
+The **/S** option indicates that this command was run using the silent install option at `2025-03-16T21:13:16.2610691Z`
+
 
 **Query used to locate event:**
 
 ```kql
 
-DeviceProcessEvents  
-| where DeviceName == "threat-hunt-lab"  
-| where ProcessCommandLine contains "tor-browser-windows-x86_64-portable-14.0.1.exe"  
-| project Timestamp, DeviceName, AccountName, ActionType, FileName, FolderPath, SHA256, ProcessCommandLine
+// TOR Browser being silently installed
+let VMName = "gonsalvr-mde";
+DeviceProcessEvents
+| where DeviceName == VMName 
+  and  ProcessCommandLine contains "tor-browser-windows-x86_64-portable-14.0.7.exe  /S"
+| project TimeGenerated, DeviceName, ActionType, FileName, ProcessCommandLine
 ```
-<img width="1212" alt="image" src="https://github.com/user-attachments/assets/b07ac4b4-9cb3-4834-8fac-9f5f29709d78">
+
+![image](https://github.com/user-attachments/assets/372541ea-a3cc-48b2-a16a-5f9074aef2b9)
 
 ---
 
