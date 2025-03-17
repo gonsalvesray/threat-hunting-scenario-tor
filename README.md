@@ -45,6 +45,8 @@ and ProcessCommandLine has_any("tor.exe","firefox.exe", "tor-browser.exe")
 ```
 <img width="1212" alt="image" src="https://github.com/user-attachments/assets/71402e84-8767-44f8-908c-1805be31122d">
 
+![image](https://github.com/user-attachments/assets/c110bc85-1eb5-4c3e-b288-9d63ca70e87c)
+
 ---
 
 ### 2. Searched the `DeviceProcessEvents` Table
