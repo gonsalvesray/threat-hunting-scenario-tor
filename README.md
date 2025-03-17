@@ -26,7 +26,7 @@ Management suspects that some employees may be using TOR browsers to bypass netw
 
 ## Steps Taken
 
-### 1. Searched the `DeviceFileEvents` Table for TOR file evidence
+### 1. Searched the `DeviceFileEvents` table for TOR file evidence
 
 Searched the **DeviceFileEvents** table for ANY file that had the string `tor` in its name and discovered that Account Name `gonsalvr` downloaded and ran a TOR installer file `tor-browser-windows-x86_64-portable-14.0.7.exe` on their Windows workstation. This installation resulted in many TOR related files being copied to their C: drive. They also created a file named `tor-shopping-list.txt` on their desktop. These events began at: `2025-03-16T21:09:23.600874Z` via the file download to: `C:\Users\GONSALVR\Downloads` using the browser Microsoft Edge `msedge.exe`. This analysis is confirmed by the following KQL query:
 
@@ -46,7 +46,7 @@ and ProcessCommandLine has_any("tor.exe","firefox.exe", "tor-browser.exe")
 
 ---
 
-### 2. Searched the `DeviceProcessEvents` Table for installation evidence
+### 2. Searched the `DeviceProcessEvents` table for installation evidence
 
 The next step was to look for evidence of the user installing the TOR Browser on the desktop. The following KQL query searched the **ProcessCommandLine** field in the  **DeviceProcessEvents** table looking for the string `tor-browser-windows-x86_64-portable-14.0.7.exe  /S`
 
@@ -69,7 +69,7 @@ DeviceProcessEvents
 
 ---
 
-### 3. Searched the `DeviceProcessEvents` Table for TOR browser execution
+### 3. Searched the `DeviceProcessEvents` table for TOR browser execution
 
 Now that I know the user ran the command to install the TOR Browser I checked to see if they actually launched and used the TOR browser by quering the field **FileName** in the **DeviceProcessEvents** table for the following strings `("tor.exe", "firefox.exe", "tor-browser.exe")`  There is evidence that is occurred at `2025-03-16T21:16:05.0740793Z`
 
@@ -84,27 +84,30 @@ and TimeGenerated between (todatetime('2025-03-16T21:16:05.0220793Z') .. todatet
 and ProcessCommandLine has_any("tor.exe","firefox.exe", "tor-browser.exe")
 | project TimeGenerated, DeviceName, AccountName, ActionType, ProcessCommandLine, SHA256
 ```
-
-![image](https://github.com/user-attachments/assets/af829d03-3560-4a5e-9492-d2bc82572ffa)
+![image](https://github.com/user-attachments/assets/bd74a293-dda7-4a83-9a0a-c3f0fc7ae4ec)
 
 ---
 
-### 4. Searched the `DeviceNetworkEvents` Table for TOR Network Connections
+### 4. Searched the `DeviceNetworkEvents` table for TOR Network Connections
 
-Searched for any indication the TOR browser was used to establish a connection using any of the known TOR ports. At `2024-11-08T22:18:01.1246358Z`, an employee on the "threat-hunt-lab" device successfully established a connection to the remote IP address `176.198.159.33` on port `9001`. The connection was initiated by the process `tor.exe`, located in the folder `c:\users\employee\desktop\tor browser\browser\torbrowser\tor\tor.exe`. There were a couple of other connections to sites over port `443`.
+Finally I was able to show that the TOR Browser was used to actually establish 2 connections to remote sites at `2025-03-16T21:16:23.480746Z` to Remote Site  `5.161.60.61` and  at `2025-03-16T21:16:31.1220241Z` to Remote site `88.151.194.12` by querying the field **RemotePort** in the **DeviceNetworkEvents** table looking for typical ports used the TOR browser: `9001, 9030, 9040, 9050, 9051, 9150`. The connections were made by user `gonsalvr` with the process `tor.exe` which was executed from the following path: `c:\users\gonsalvr\desktop\tor browser\browser\torbrowser\tor`
+We can show this by running a KQL query:
 
 **Query used to locate events:**
 
 ```kql
-DeviceNetworkEvents  
-| where DeviceName == "threat-hunt-lab"  
-| where InitiatingProcessAccountName != "system"  
-| where InitiatingProcessFileName in ("tor.exe", "firefox.exe")  
-| where RemotePort in ("9001", "9030", "9040", "9050", "9051", "9150", "80", "443")  
-| project Timestamp, DeviceName, InitiatingProcessAccountName, ActionType, RemoteIP, RemotePort, RemoteUrl, InitiatingProcessFileName, InitiatingProcessFolderPath  
-| order by Timestamp desc
+// TOR Browser or service is being used and is actively creating network connections
+let VMName = "gonsalvr-mde";
+DeviceNetworkEvents
+| where DeviceName  == VMName
+  and InitiatingProcessFileName in ("tor.exe", "firefox.exe")
+  and RemotePort in (9001, 9030, 9040, 9050, 9051, 9150)
+  and ActionType == "ConnectionSuccess"
+| project TimeGenerated, DeviceName, Account_Name = InitiatingProcessAccountName, File_Name = InitiatingProcessFileName, 
+          Init_Process_Path = InitiatingProcessFolderPath, RemoteIP, RemotePort, RemoteUrl, Connection = ActionType
+| order by TimeGenerated desc
 ```
-<img width="1212" alt="image" src="https://github.com/user-attachments/assets/87a02b5b-7d12-4f53-9255-f5e750d0e3cb">
+![image](https://github.com/user-attachments/assets/c0455a11-8ae3-4ab2-bb55-3886da98cc9c)
 
 ---
 
