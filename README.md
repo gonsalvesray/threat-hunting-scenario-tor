@@ -26,9 +26,7 @@ Management suspects that some employees may be using TOR browsers to bypass netw
 
 ## Steps Taken
 
-### 1. Searched the `DeviceFileEvents` Table
-
-Searched for any file that had the string "tor" in it and discovered what looks like the user "employee" downloaded a TOR installer, did something that resulted in many TOR-related files being copied to the desktop, and the creation of a file called `tor-shopping-list.txt` on the desktop at `2024-11-08T22:27:19.7259964Z`. These events began at `2024-11-08T22:14:48.6065231Z`.
+### 1. Searched the `DeviceFileEvents` Table for TOR file evidence
 
 Searched the **DeviceFileEvents** table for ANY file that had the string `tor` in its name and discovered that Account Name `gonsalvr` downloaded and ran a TOR installer file `tor-browser-windows-x86_64-portable-14.0.7.exe` on their Windows workstation. This installation resulted in many TOR related files being copied to their C: drive. They also created a file named `tor-shopping-list.txt` on their desktop. These events began at: `2025-03-16T21:09:23.600874Z` via the file download to: `C:\Users\GONSALVR\Downloads` using the browser Microsoft Edge `msedge.exe`. This analysis is confirmed by the following KQL query:
 
@@ -48,7 +46,7 @@ and ProcessCommandLine has_any("tor.exe","firefox.exe", "tor-browser.exe")
 
 ---
 
-### 2. Searched the `DeviceProcessEvents` Table
+### 2. Searched the `DeviceProcessEvents` Table for installation evidence
 
 The next step was to look for evidence of the user installing the TOR Browser on the desktop. The following KQL query searched the **ProcessCommandLine** field in the  **DeviceProcessEvents** table looking for the string `tor-browser-windows-x86_64-portable-14.0.7.exe  /S`
 
@@ -71,20 +69,23 @@ DeviceProcessEvents
 
 ---
 
-### 3. Searched the `DeviceProcessEvents` Table for TOR Browser Execution
+### 3. Searched the `DeviceProcessEvents` Table for TOR browser execution
 
-Searched for any indication that user "employee" actually opened the TOR browser. There was evidence that they did open it at `2024-11-08T22:17:21.6357935Z`. There were several other instances of `firefox.exe` (TOR) as well as `tor.exe` spawned afterwards.
+Now that I know the user ran the command to install the TOR Browser I checked to see if they actually launched and used the TOR browser by quering the field **FileName** in the **DeviceProcessEvents** table for the following strings `("tor.exe", "firefox.exe", "tor-browser.exe")`  There is evidence that is occurred at `2025-03-16T21:16:05.0740793Z`
 
 **Query used to locate events:**
 
 ```kql
-DeviceProcessEvents  
-| where DeviceName == "threat-hunt-lab"  
-| where FileName has_any ("tor.exe", "firefox.exe", "tor-browser.exe")  
-| project Timestamp, DeviceName, AccountName, ActionType, FileName, FolderPath, SHA256, ProcessCommandLine  
-| order by Timestamp desc
+// TOR Browser or service was launched
+let VMName = "gonsalvr-mde";
+DeviceProcessEvents
+| where DeviceName == VMName 
+and TimeGenerated between (todatetime('2025-03-16T21:16:05.0220793Z') .. todatetime('2025-03-16T21:16:05.0740793Z'))
+and ProcessCommandLine has_any("tor.exe","firefox.exe", "tor-browser.exe")
+| project TimeGenerated, DeviceName, AccountName, ActionType, ProcessCommandLine, SHA256
 ```
-<img width="1212" alt="image" src="https://github.com/user-attachments/assets/b13707ae-8c2d-4081-a381-2b521d3a0d8f">
+
+![image](https://github.com/user-attachments/assets/af829d03-3560-4a5e-9492-d2bc82572ffa)
 
 ---
 
