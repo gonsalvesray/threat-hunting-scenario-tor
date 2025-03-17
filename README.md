@@ -1,5 +1,6 @@
 # threat-hunting-scenario-tor
-<img width="400" src="https://github.com/User-attachments/assets/44bac428-01bb-4fe9-9d85-96cba7698bee" alt="Tor Logo with the onion and a crosshair on it"/>
+<img width="400" src="https://github.com/user-attachments/assets/3905f037-bd04-464f-acb1-873070453a65" alt="Tor Logo with the onion and a crosshair on it"/>
+
 
 # Threat Hunt Report: Unauthorized TOR Usage
 - [Scenario Creation](https://github.com/gonsalvesray/threat-hunting-scenario-tor/blob/main/threat-hunting-scenario-tor-event-creation.md)
@@ -186,7 +187,7 @@ DeviceFileEvents
 
 ## Summary
 
-The User "employee" on the "threat-hunt-lab" device initiated and completed the installation of the TOR browser. They proceeded to launch the browser, establish connections within the TOR network, and created various files related to TOR on their desktop, including a file named `tor-shopping-list.txt`. This sequence of activities indicates that the User actively installed, configured, and used the TOR browser, likely for anonymous browsing purposes, with possible documentation in the form of the "shopping list" file.
+The User **gonsalr** on the **gonsalvr-mde** device initiated and completed the installation of the TOR browser. They proceeded to launch the browser, establish connections within the TOR network, and created various files related to TOR on their desktop, including a file named **tor-shopping-list.txt**. This sequence of activities indicates that the User actively installed, configured, and used the TOR browser, likely for anonymous browsing purposes, with possible documentation in the form of the "shopping list" file.
 
 ---
 
