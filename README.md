@@ -4,7 +4,7 @@
 [//]: # (This may be the most platform independent comment)
 
 # Threat Hunt Report: Unauthorized TOR Usage
-- [Scenario Creation](https://github.com/gonsalvesray/threat-hunting-scenario-tor-event-creation.md)
+- [Scenario Creation](https://github.com/gonsalvesray/threat-hunting-scenario-tor-event-creation)
 
 ## Platforms and Languages Leveraged
 - Windows 10 Virtual Machines (Microsoft Azure)
