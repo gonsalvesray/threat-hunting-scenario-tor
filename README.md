@@ -16,11 +16,11 @@ Management suspects that some employees may be using TOR browsers to bypass netw
 
 ### High-Level TOR-Related IoC Discovery Plan
 
-- 1. **Check `DeviceFileEvents`** for any `tor(.exe)` or `firefox(.exe)` file events as evidence of TOR files on the workstation.
-- 2. **Check `DeviceProcessEvents`** for any signs of installation of the TOR browser.
-- 3. **Check `DeviceProcessEvents`** for any indication of TOR browser usage.
-- 4. **Check `DeviceNetworkEvents`** for any signs of outgoing connections over known TOR ports.
-- 5. **Check `DeviceFileEvents`** to verify the creation of the file "tor-shopping-list.txt".
+- Check **`DeviceFileEvents`** for any `tor(.exe)` or `firefox(.exe)` file events as evidence of TOR files on the workstation.
+- Check **`DeviceProcessEvents`** for any signs of installation of the TOR browser.
+- Check **`DeviceProcessEvents`** for any indication of TOR browser usage.
+- Check **`DeviceNetworkEvents`** for any signs of outgoing connections over known TOR ports.
+- Check **`DeviceFileEvents`** to verify the creation of the file "tor-shopping-list.txt".
 
 ---
 
@@ -30,16 +30,18 @@ Management suspects that some employees may be using TOR browsers to bypass netw
 
 Searched for any file that had the string "tor" in it and discovered what looks like the user "employee" downloaded a TOR installer, did something that resulted in many TOR-related files being copied to the desktop, and the creation of a file called `tor-shopping-list.txt` on the desktop at `2024-11-08T22:27:19.7259964Z`. These events began at `2024-11-08T22:14:48.6065231Z`.
 
+Searched the **DeviceFileEvents** table for ANY file that had the string `tor` in its name and discovered that Account Name `gonsalvr` downloaded and ran a TOR installer file `tor-browser-windows-x86_64-portable-14.0.7.exe` on their Windows workstation. This installation resulted in many TOR related files being copied to their C: drive. They also created a file named `tor-shopping-list.txt` on their desktop. These events began at: `2025-03-16T21:09:23.600874Z` via the file download to: `C:\Users\GONSALVR\Downloads` using the browser Microsoft Edge `msedge.exe`. This analysis is confirmed by the following KQL query:
+
 **Query used to locate events:**
 
 ```kql
-DeviceFileEvents  
-| where DeviceName == "threat-hunt-lab"  
-| where InitiatingProcessAccountName == "employee"  
-| where FileName contains "tor"  
-| where Timestamp >= datetime(2024-11-08T22:14:48.6065231Z)  
-| order by Timestamp desc  
-| project Timestamp, DeviceName, ActionType, FileName, FolderPath, SHA256, Account = InitiatingProcessAccountName
+// TOR Browser or service was launched
+let VMName = "gonsalvr-mde";
+DeviceProcessEvents
+| where DeviceName == VMName 
+and TimeGenerated between (todatetime('2025-03-16T21:16:05.0220793Z') .. todatetime('2025-03-16T21:16:05.0740793Z'))
+and ProcessCommandLine has_any("tor.exe","firefox.exe", "tor-browser.exe")
+| project TimeGenerated, DeviceName, AccountName, ActionType, ProcessCommandLine, SHA256
 ```
 <img width="1212" alt="image" src="https://github.com/user-attachments/assets/71402e84-8767-44f8-908c-1805be31122d">
 
